@@ -8,7 +8,7 @@ classdef Inventory < handle
     %   will replenish this inventory. An _order_ for material means that a
     %   customer orders material, and that order will be filled out of this
     %   inventory.
-    % 
+    %
     %   Each time step represents one day during which orders arrive and
     %   are filled.  When the on-hand amount drops below ReorderPoint, a
     %   request is placed for RequestBatchSize (continuous review). The
@@ -80,7 +80,28 @@ classdef Inventory < handle
             VariableNames={'Time', 'OnHand', 'Backlog', 'RunningCost'}, ...
             VariableTypes={'double', 'double', 'double', 'double'});
 
-        % RunningCost - Total cost incurred so far.
+        % RunningPerBatchCost - Total per-batch request costs incurred so
+        % far.
+        RunningPerBatchCost = 0.0;
+
+        % RunningPerUnitCost - Total per-unit request costs so far.  This
+        % cost is unavoidable if we are to meed demand.  It is often
+        % excluded from EOQ calculations.
+        RunningPerUnitCost = 0.0;
+
+        % RunningHoldingCost - Total holding costs inucrred so far.
+        RunningHoldingCost = 0.0;
+
+        % RunningShortageCost - Total shortage costs incurred so far.
+        RunningShortageCost = 0.0;
+
+        % RunningInventoryVariableCost - Total of per-batch costs, holding
+        % costs, and shortage costs incurred so far.  Excludes per-unit
+        % request cost, since that is determined by demand and cannot be
+        % changed by inventory policy.
+        RunningInventoryVariableCost = 0.0;
+
+        % RunningCost - Total cost of all kinds incurred so far.
         RunningCost = 0.0;
 
         % Backlog - List of backlogged orders.
@@ -188,14 +209,21 @@ classdef Inventory < handle
         function maybe_request_more(obj)
             % maybe_request_more If the amount of material on-hand is below
             % the ReorderPoint, place a request for more.
-            % 
+            %
             % If a request has been placed but not yet fulfilled, no
             % additional request is placed.
 
             if ~obj.RequestPlaced && obj.OnHand <= obj.ReorderPoint
-                order_cost = obj.RequestCostPerBatch ...
+                obj.RunningInventoryVariableCost = ...
+                    obj.RunningInventoryVariableCost ...
+                    + obj.RequestCostPerBatch;
+                obj.RunningPerBatchCost = obj.RunningPerBatchCost ...
+                    + obj.RequestCostPerBatch;
+                obj.RunningPerUnitCost = obj.RunningPerUnitCost ...
                     + obj.RequestBatchSize * obj.RequestCostPerUnit;
-                obj.RunningCost = obj.RunningCost + order_cost;
+                ThisRequestCost = obj.RequestCostPerBatch ...
+                    + obj.RequestBatchSize * obj.RequestCostPerUnit;
+                obj.RunningCost = obj.RunningCost + ThisRequestCost;
                 arrival = ShipmentArrival( ...
                     Time=floor(obj.Time+obj.RequestLeadTime), ...
                     Amount=obj.RequestBatchSize);
@@ -230,14 +258,19 @@ classdef Inventory < handle
             % total amount of all backlogged orders.  Record an entry to
             % the Log table.  Schedule the beginning of the next day to
             % happen immediately.
-            % 
+            %
             % *Note:* There is no separate RecordToLog event in this
             % simulation like there is in ServiceQueue.
-
+            TodayHoldingCost = obj.OnHand * obj.HoldingCostPerUnitPerDay;
+            obj.RunningHoldingCost = obj.RunningHoldingCost + TodayHoldingCost;
+            TodayShortageCost = total_backlog(obj) * obj.ShortageCostPerUnitPerDay;
+            obj.RunningShortageCost = obj.RunningShortageCost ...
+                + TodayShortageCost;
+            obj.RunningInventoryVariableCost = ...
+                obj.RunningInventoryVariableCost ...
+                + TodayHoldingCost + TodayShortageCost;
             obj.RunningCost = obj.RunningCost ...
-                + obj.OnHand * obj.HoldingCostPerUnitPerDay;
-            obj.RunningCost = obj.RunningCost ...
-                + total_backlog(obj) * obj.ShortageCostPerUnitPerDay;
+                + TodayHoldingCost + TodayShortageCost;
             record_log(obj);
             % Schedule the beginning of the next day to happen immediately.
             schedule_event(obj, BeginDay(Time=obj.Time));
