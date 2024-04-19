@@ -70,11 +70,21 @@ classdef Inventory < handle
         % Events - PriorityQueue of events ordered by time.
         Events;
 
-        % Log - Table of log entries.  The columns are:
+        % Log - Table of log entries.  Each row is an entry that includes
+        % part of the current state of the inventory and the totals of
+        % various costs incurred up to the time of the entry.  The columns
+        % are:
         % * Time - Time of the entry
         % * OnHand - Amount of material on hand
         % * Backlog - Total amount of all backlogged orders
-        % * RunningCost - Total cost incurred up to that time
+        % * RunningPerBatchCost - Total of per-batch costs
+        % * RunningPerUnitCost - Total of per-unit costs
+        % * RunningHoldingCost - Total of holding costs
+        % * RunningShortageCost - Total of shortage costs
+        % * RunningInventoryVariableCost - Total of per-batch, holding, and
+        % shortage costs, that is, everything except the per-unit costs,
+        % which are determined by demand rather than inventory management
+        % * RunningCost - Total of all costs
         Log = table( ...
             Size=[0, 9], ...
             VariableNames={'Time', 'OnHand', 'Backlog', ...
@@ -110,7 +120,10 @@ classdef Inventory < handle
         % RunningCost - Total cost of all kinds incurred so far.
         RunningCost = 0.0;
 
-        % Backlog - List of backlogged orders.
+        % Backlog - List of currently backlogged orders.  These are
+        % OrderReceived objects.  They are removed from this list and
+        % rescheduled when requested material arrives and replenishes the
+        % amount on hand.
         Backlog = {};
 
         % Fulfilled - List of fulfilled orders.
@@ -299,6 +312,20 @@ classdef Inventory < handle
                 obj.RunningHoldingCost, obj.RunningShortageCost, ...
                 obj.RunningInventoryVariableCost, ...
                 obj.RunningCost};
+        end
+
+        function frac = fraction_orders_backlogged(obj)
+            % fraction_orders_backlogged Compute the fraction of all
+            % fulfilled orders that were backlogged.
+            NFulfilled = length(obj.Fulfilled);
+            NBacklogged = 0;
+            for j = 1:NFulfilled
+                x = obj.Fulfilled{j};
+                if x.Time > x.OriginalTime
+                    NBacklogged = NBacklogged + 1;
+                end
+            end
+            frac = NBacklogged / NFulfilled;
         end
     end
 end
