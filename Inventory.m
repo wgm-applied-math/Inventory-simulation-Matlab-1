@@ -329,6 +329,9 @@ classdef Inventory < handle
         end
 
         function DelayTimes = fulfilled_order_delay_times(obj)
+            % fulfilled_order_delay_times Build a list of delay
+            % times of all fulfilled orders.
+
             % iterate over obj.Fulfilled:
             NumFulfilled = length(obj.Fulfilled);
             DelayTimes = zeros([NumFulfilled, 1]);
