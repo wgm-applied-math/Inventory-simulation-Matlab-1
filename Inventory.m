@@ -257,5 +257,16 @@ classdef Inventory < handle
             tb = total_backlog(obj);
             obj.Log(end+1, :) = {obj.Time, obj.OnHand, tb, obj.RunningCost};
         end
+
+        function DelayTimes = fulfilled_order_delay_times(obj)
+            % iterate over obj.Fulfilled:
+            NumFulfilled = length(obj.Fulfilled);
+            DelayTimes = zeros([NumFulfilled, 1]);
+            for j = 1:NumFulfilled
+                x = obj.Fulfilled{j};
+                DelayTimes(j) = x.Time - x.OriginalTime;
+            end
+
+        end
     end
 end
