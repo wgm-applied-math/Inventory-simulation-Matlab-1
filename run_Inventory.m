@@ -52,6 +52,21 @@ for SampleNum = 1:NumSamples
     InventorySamples{SampleNum} = inventory;
 end
 
+%% Collect daily backlog amounts
+
+BacklogAmountSamples = cell([NumSamples, 1]);
+
+for SampleNum = 1:NumSamples
+    inventory = InventorySamples{SampleNum};
+
+    bd = inventory.Log.Backlog > 0;
+    BacklogAmountSamples{SampleNum} = inventory.Log.Backlog(bd);
+
+end
+
+BacklogAmounts = vertcat(BacklogAmountSamples{:});
+ 
+
 %% Collect statistics
 
 % Pull the RunningCost from each complete sample.
