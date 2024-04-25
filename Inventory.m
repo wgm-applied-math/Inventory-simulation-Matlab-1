@@ -317,15 +317,15 @@ classdef Inventory < handle
         function frac = fraction_orders_backlogged(obj)
             % fraction_orders_backlogged Compute the fraction of all
             % fulfilled orders that were backlogged.
-            NFulfilled = length(obj.Fulfilled);
-            NBacklogged = 0;
-            for j = 1:NFulfilled
+            NumFulfilled = length(obj.Fulfilled);
+            NumBacklogged = 0;
+            for j = 1:NumFulfilled
                 x = obj.Fulfilled{j};
                 if x.Time > x.OriginalTime
-                    NBacklogged = NBacklogged + 1;
+                    NumBacklogged = NumBacklogged + 1;
                 end
             end
-            frac = NBacklogged / NFulfilled;
+            frac = NumBacklogged / NumFulfilled;
         end
 
         function DelayTimes = fulfilled_order_delay_times(obj)
