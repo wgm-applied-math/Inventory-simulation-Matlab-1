@@ -17,39 +17,39 @@ classdef Inventory < handle
 
     properties (SetAccess = public)
         % OnHand - Amount of material on hand
-        OnHand = 200;
+        OnHand;
 
         % RequestCostPerBatch - Fixed cost to request a batch of material,
         % independent of the size of the batch.
-        RequestCostPerBatch = 25.0;
+        RequestCostPerBatch;
 
         % RequestCostPerUnit - Variable cost factor; cost of each unit
         % requested in a batch.
-        RequestCostPerUnit = 3.0;
+        RequestCostPerUnit;
 
         % HoldingCostPerUnitPerDay - Cost to hold one unit of material
         % on hand for one day.
-        HoldingCostPerUnitPerDay = 0.05/7;
+        HoldingCostPerUnitPerDay;
 
         % ShortageCostPerUnitPerDay - Cost factor for a backlogged
         % order; how much it costs to be one unit short for one day.
-        ShortageCostPerUnitPerDay = 2.00/7;
+        ShortageCostPerUnitPerDay;
 
         % RequestBatchSize - When requesting a batch of material, how many
         % units to request in a batch.
-        RequestBatchSize = 200;
+        RequestBatchSize;
 
         % ReorderPoint - When the amount of material on hand drops to this
         % many units, request another batch.
-        ReorderPoint = 50;
+        ReorderPoint;
 
         % RequestLeadTime - When a batch is requested, it will be this
         % many time step before the batch arrives.
-        RequestLeadTime = 2.0;
+        RequestLeadTime;
 
         % OutgoingSizeDist - Distribution sampled to determine the size of
         % random outgoing orders placed to this inventory.
-        OutgoingSizeDist = makedist("Gamma", a=10, b=2);
+        OutgoingSizeDist;
 
         % DailyOrderCountDist - Distribution sampled to determine the
         % number of random outgoing orders placed to this inventory per
