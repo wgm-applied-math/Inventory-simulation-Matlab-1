@@ -55,6 +55,11 @@ classdef Inventory < handle
         % number of random outgoing orders placed to this inventory per
         % day.
         DailyOrderCountDist = makedist("Poisson", lambda=4);
+
+        % ErrorIfBackloggedCountExceeds - Stop and raise an error if the
+        % number of backlogged orders exceeds this many at the end of a
+        % day.  Set to inf to disable this check.
+        ErrorIfBackloggedCountExceeds = 100;
     end
     properties (SetAccess = private)
         % Time - Current time
@@ -276,7 +281,7 @@ classdef Inventory < handle
             % amount of material on hand.  Record shortage cost for the
             % total amount of all backlogged orders.  Record an entry to
             % the Log table.  Schedule the beginning of the next day to
-            % happen immediately.
+            % happen immediately.  Call check_for_problems.
             %
             % *Note:* There is no separate RecordToLog event in this
             % simulation like there is in ServiceQueue.
@@ -293,6 +298,22 @@ classdef Inventory < handle
             record_log(obj);
             % Schedule the beginning of the next day to happen immediately.
             schedule_event(obj, BeginDay(Time=obj.Time));
+            % Check for problems
+            check_for_problems(obj);
+        end
+
+        function check_for_problems(obj)
+            % check_for_problems Check for problems
+            %
+            % check_for_problems(obj) - Check for problems, such as too
+            % many backlogged orders and other things that indicate the
+            % inventory process is running away or diverging.
+
+            NumBackloggedOrders = length(obj.Backlog);
+            if NumBackloggedOrders > obj.ErrorIfBackloggedCountExceeds
+                error("Count of backlogged orders is %d, which exceeds threshold of %d", ...
+                    NumBackloggedOrders, obj.ErrorIfBackloggedCountExceeds);
+            end
         end
 
         function tb = total_backlog(obj)
