@@ -37,11 +37,11 @@ classdef Inventory < handle
 
         % RequestBatchSize - When requesting a batch of material, how many
         % units to request in a batch.
-        RequestBatchSize = 200;
+        RequestBatchSize = 758;
 
         % ReorderPoint - When the amount of material on hand drops to this
         % many units, request another batch.
-        ReorderPoint = 50;
+        ReorderPoint = 141;
 
         % RequestLeadTime - When a batch is requested, it will be this
         % many time step before the batch arrives.
@@ -191,7 +191,8 @@ classdef Inventory < handle
             % 
             % If a request has been placed but not yet fulfilled, no
             % additional request is placed.
-
+            
+           
             if ~obj.RequestPlaced && obj.OnHand <= obj.ReorderPoint
                 order_cost = obj.RequestCostPerBatch ...
                     + obj.RequestBatchSize * obj.RequestCostPerUnit;
@@ -257,5 +258,46 @@ classdef Inventory < handle
             tb = total_backlog(obj);
             obj.Log(end+1, :) = {obj.Time, obj.OnHand, tb, obj.RunningCost};
         end
+% fulfilled order delays
+        function DelayTimes = fulfilled_order_delay_times(obj)
+            % iterate over obj.Fulfilled
+            NumFulfilled = length(obj.Fulfilled);
+
+            DelayTimes = zeros([NumFulfilled,1]);
+            for j = 1:NumFulfilled
+                x = obj.Fulfilled{j};
+                DelayTimes(j) = x.Time - x.OriginalTime;
+
+            end 
+
+        end
+
+        % builds a bunch of example inventory object
+        function frac = fraction_orders_backlogged(obj)
+            NFulfilled = length(obj.Fulfilled);
+            NBacklogged = 0;
+            for j = 1:NFulfilled
+                x = obj.Fulfilled{j};
+                if x.Time > x.OriginalTime
+                    NBacklogged = NBacklogged + 1;
+                end
+            end
+            frac = NBacklogged / NFulfilled;
+
+        end
+
+        function frac = fraction_days_backlogged(obj)
+            NDays = height(obj.Log);
+            NBacklogged = 0;
+            for j = 1:NDays
+                x = obj.Log.Backlog(j);
+                if x > 0
+                    NBacklogged = NBacklogged + 1;
+                end
+            end
+            frac = NBacklogged / NDays;
+        end 
+
     end
 end
+
