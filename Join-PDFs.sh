@@ -7,7 +7,7 @@ cd 'html'
 
 pdfjam -o 'Inventory-simulation-printout.pdf' \
        Inventory.pdf \
-       OutgoingOrder.pdf \
+       OrderReceived.pdf \
        Event.pdf \
        ShipmentArrival.pdf \
        BeginDay.pdf \
